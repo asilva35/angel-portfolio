@@ -228,8 +228,9 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
     const tlRef = useRef<gsap.core.Timeline | null>(null);
 
     useEffect(() => {
+        if (!groupRef.current) return;
         if (begin) {
-            gsap.to(groupRef.current!.position, {
+            gsap.to(groupRef.current.position, {
                 x: 0,
                 duration: 1.2,
                 ease: 'power3.out',
@@ -245,6 +246,23 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                 }
             });
 
+        }
+        else {
+            gsap.to(groupRef.current!.position, {
+                x: 2,
+                duration: 1.2,
+                ease: 'power3.out',
+            });
+            gsap.to(groupRef.current!.rotation, {
+                y: -Math.PI / 4,
+                z: 0,
+                duration: 1.2,
+                ease: 'power3.Out',
+                onComplete: () => {
+                    setListenToScroll(false);
+                    setShowInfo(false);
+                }
+            });
         }
     }, [begin])
 
@@ -522,10 +540,10 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                                 onClick={() => handleDotClick(idx)}
                                 className="relative w-full h-8 flex justify-center items-center group cursor-pointer"
                             >
-                                <div 
+                                <div
                                     className={`w-2 h-2 rounded-full transition-all duration-300 group-hover:scale-[1.8] group-hover:bg-white
                                         ${activeIndex === idx ? 'bg-white scale-[1.5] shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'bg-white/40'}
-                                    `} 
+                                    `}
                                 />
                             </button>
                         ))}

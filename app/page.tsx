@@ -105,22 +105,32 @@ export default function Home() {
   const skils_random = SKILLS;
   const [showingProjects, setShowingProjects] = useState(false);
   const [currentPlane, setCurrentPlane] = useState(0);
+  const triggerShowHero = () => {
+    setShowingProjects(false);
+    gsap.to('#hero-section', {
+      opacity: 1,
+      pointerEvents: 'auto',
+      alpha: 1,
+      duration: 1,
+      ease: 'power3.out',
+    })
+  }
+  const triggerShowProjects = () => {
+    setShowingProjects(true);
+    // HERO SECTION HIDE AND POINTER EVENTS NONE
+    gsap.to('#hero-section', {
+      opacity: 0,
+      pointerEvents: 'none',
+      alpha: 0,
+      duration: 1,
+      ease: 'power3.out',
+    })
+  }
   useEffect(() => {
-    const triggerStart = () => {
-      setShowingProjects(true);
-      // HERO SECTION HIDE AND POINTER EVENTS NONE
-      gsap.to('#hero-section', {
-        opacity: 0,
-        pointerEvents: 'none',
-        alpha: 0,
-        duration: 1,
-        ease: 'power3.out',
-      })
-    }
 
     const handleWheel = (e: WheelEvent) => {
       if (showingProjects) return
-      triggerStart();
+      triggerShowProjects();
     }
 
     let touchStartY = 0;
@@ -135,7 +145,7 @@ export default function Home() {
 
       // Si hay un desplazamiento mínimo (drag), iniciamos
       if (Math.abs(delta) > 10) {
-        triggerStart();
+        triggerShowProjects();
       }
     };
 
@@ -159,7 +169,7 @@ export default function Home() {
       {/* Navigation */}
       <header className="fixed top-0 left-0 w-full z-50 px-12 py-8 flex justify-between items-center text-[11px] uppercase tracking-[0.3em] font-medium">
         <nav className="flex w-full justify-between">
-          <a href="#projects" className="hover:text-white transition-colors duration-300">Projects</a>
+          <a href="#projects" className="hover:text-white transition-colors duration-300" onClick={() => showingProjects ? triggerShowHero() : triggerShowProjects()}>{showingProjects ? 'Home' : 'Projects'}</a>
           <a href="mailto:sistev.contacto@gmail.com" className="hover:text-white transition-colors duration-300">Contact Me</a>
           <a href="#experiments" className="hover:text-white transition-colors duration-300">Experiments</a>
         </nav>
