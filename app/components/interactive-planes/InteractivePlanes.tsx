@@ -137,7 +137,8 @@ const InteractivePlane = ({ idPlane, currentPlane, project, position, grayScale,
                 value: targetValue,
                 duration: 0.5,
                 delay: 3.6, // Mantenemos la sincronización con el tiempo de transporte
-                ease: "power2.inOut"
+                ease: "power2.inOut",
+                overwrite: "auto"
             });
         }
     }, [currentPlane, idPlane]);
@@ -222,7 +223,9 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
     const [postProcessing, setPostProcessing] = useState(false);
     const [listenToScroll, setListenToScroll] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
     const loadingBar = useRef<HTMLDivElement>(null);
+    const tlRef = useRef<gsap.core.Timeline | null>(null);
 
     useEffect(() => {
         if (begin) {
@@ -245,35 +248,39 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
         }
     }, [begin])
 
-    useEffect(() => { onChangeIndex(indexRef.current) }, [indexRef.current])
+    useEffect(() => {
+        onChangeIndex(activeIndex)
+    }, [activeIndex])
 
     const doAnimation = (bounce: boolean = false, bounceDirection: number = 1) => {
-        console.log("DO animation");
-        if (!bounce) {
-            gsap.to(groupRef.current!.position, {
-                z: -2,
-                duration: 1.2,
-                ease: 'power3.inOut',
-                onComplete: () => {
-                    gsap.to(groupRef.current!.position, {
-                        y: indexRef.current * 5,
-                        duration: 1.2,
-                        ease: 'power3.inOut',
-                        onComplete: () => {
-                            gsap.to(groupRef.current!.position, {
-                                z: 0,
-                                duration: 1.2,
-                                ease: 'power3.inOut',
-                                onComplete: () => {
-                                    isMovingRef.current = false;
-                                    setIsTransitioning(false);
-                                }
-                            });
-                        }
-                    });
+        // Matar animaciones previas para evitar colisiones
+        if (tlRef.current) tlRef.current.kill();
+        gsap.killTweensOf(groupRef.current!.position);
+        gsap.killTweensOf(loadingBar.current);
 
+        if (!bounce) {
+            tlRef.current = gsap.timeline({
+                onComplete: () => {
+                    isMovingRef.current = false;
+                    setIsTransitioning(false);
                 }
             });
+
+            tlRef.current.to(groupRef.current!.position, {
+                z: -2,
+                duration: 1.2,
+                ease: 'power3.inOut'
+            })
+                .to(groupRef.current!.position, {
+                    y: indexRef.current * 5,
+                    duration: 1.2,
+                    ease: 'power3.inOut'
+                })
+                .to(groupRef.current!.position, {
+                    z: 0,
+                    duration: 1.2,
+                    ease: 'power3.inOut'
+                });
 
             // Loading bar animation
             gsap.to(loadingBar.current, {
@@ -281,33 +288,34 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                 display: 'block',
                 duration: 3.6,
                 ease: 'power3.inOut',
+                overwrite: "auto",
                 onComplete: () => {
                     gsap.to(loadingBar.current, {
                         display: 'none',
                         width: `0%`,
                         duration: 0.2,
                         ease: 'power3.inOut',
+                        overwrite: "auto"
                     });
                 }
             });
 
         } else {
             // Bounce Effect
-            gsap.to(groupRef.current!.position, {
+            tlRef.current = gsap.timeline({
+                onComplete: () => {
+                    isMovingRef.current = false;
+                    setIsTransitioning(false);
+                }
+            });
+            tlRef.current.to(groupRef.current!.position, {
                 y: indexRef.current * 5 + bounceDirection * 0.8,
                 duration: 0.25,
-                ease: 'power2.out',
-                onComplete: () => {
-                    gsap.to(groupRef.current!.position, {
-                        y: indexRef.current * 5,
-                        duration: 0.6,
-                        ease: 'elastic.out(1, 0.5)',
-                        onComplete: () => {
-                            isMovingRef.current = false;
-                            setIsTransitioning(false)
-                        }
-                    });
-                }
+                ease: 'power2.out'
+            }).to(groupRef.current!.position, {
+                y: indexRef.current * 5,
+                duration: 0.6,
+                ease: 'elastic.out(1, 0.5)'
             });
         }
     }
@@ -315,6 +323,7 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
     const handleNextManual = () => {
         if (indexRef.current < totalPlanes - 1) {
             indexRef.current++;
+            setActiveIndex(indexRef.current);
             doAnimation(false, 1);
         } else {
             doAnimation(true, 1);
@@ -324,11 +333,25 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
     const handlePrevManual = () => {
         if (indexRef.current > 0) {
             indexRef.current--;
+            setActiveIndex(indexRef.current);
             doAnimation(false, -1);
         } else {
             doAnimation(true, -1);
         }
     }
+
+    const handleDotClick = (index: number) => {
+        if (index === indexRef.current) return;
+        // Evitamos clicks si ya está en movimiento o transicionando
+        if (isMovingRef.current || isTransitioning) return;
+
+        const diff = index - indexRef.current;
+        indexRef.current = index;
+        setActiveIndex(index);
+        setIsTransitioning(true);
+        isMovingRef.current = true;
+        doAnimation(false, diff > 0 ? 1 : -1);
+    };
 
     const handleFocusPlane = () => {
         // setInteractivePlaneFocus(!interactivePlaneFocus)
@@ -345,7 +368,7 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
         //         }
         //     }
         // });
-        window.open(projects[indexRef.current].link, '_blank');
+        window.open(projects[activeIndex].link, '_blank');
     }
 
     useEffect(() => {
@@ -469,17 +492,16 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                             <div className="absolute top-1/2 -translate-y-1/2 left-10 right-10 z-10 flex justify-between items-end pointer-events-none select-none">
                                 <div className="flex flex-col gap-4">
                                     <div className="max-w-[250px] text-[10px] text-white/30 leading-relaxed uppercase tracking-widest">
-                                        <h2 className="text-[2rem] text-white/80 uppercase font-bold">{projects[indexRef.current].name}</h2>
+                                        <h2 className="text-[2rem] text-white/80 uppercase font-bold">{projects[activeIndex].name}</h2>
                                     </div>
                                     <div className="max-w-[250px] text-[10px] text-white/80 leading-relaxed uppercase tracking-widest">
-                                        {projects[indexRef.current].description}
+                                        {projects[activeIndex].description}
+                                    </div>
+                                    <div className="text-white/80 text-[10px] font-mono">
+                                        {projects[activeIndex].tags.join(' // ')}
                                     </div>
                                 </div>
-                                <div className="text-white/80 text-[10px] font-mono">
-                                    {projects[indexRef.current].tags.join(' // ')}
-                                </div>
                             </div>
-
                             <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
                                 <button
                                     onClick={() => handleFocusPlane()}
@@ -491,9 +513,27 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                         </>
                     )}
 
+                    {/* Sliderbar Dots */}
+                    <div className="sidebar-slider fixed right-14 md:right-25 top-1/2 -translate-y-1/2 h-[50vh] w-[20px] flex flex-col justify-between items-center z-[100]">
+                        <div className="absolute h-full w-[1px] bg-white/20 -z-10" />
+                        {projects.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => handleDotClick(idx)}
+                                className="relative w-full h-8 flex justify-center items-center group cursor-pointer"
+                            >
+                                <div 
+                                    className={`w-2 h-2 rounded-full transition-all duration-300 group-hover:scale-[1.8] group-hover:bg-white
+                                        ${activeIndex === idx ? 'bg-white scale-[1.5] shadow-[0_0_10px_rgba(255,255,255,0.8)]' : 'bg-white/40'}
+                                    `} 
+                                />
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="loading-bar-cnt fixed bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none" style={{ opacity: isTransitioning ? 1 : 0 }}>
                         <div className="w-60 h-2 bg-black/20 border border-white/20 rounded-full overflow-hidden">
-                            <div ref={loadingBar} className="w-0 h-full" style={{ background: 'red' }} />
+                            <div ref={loadingBar} className="w-0 h-full bg-white/80" />
                         </div>
                     </div>
                 </>
