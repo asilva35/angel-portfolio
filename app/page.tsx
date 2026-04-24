@@ -1,6 +1,6 @@
 'use client';
 
-import InteractivePlanes from "@/app/components/interactive-planes/InteractivePlanes";
+import InteractivePlanes from "@/components/interactive-planes/InteractivePlanes";
 import { Abril_Fatface, Montserrat } from 'next/font/google';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import Image from "next/image";
@@ -250,7 +250,7 @@ export default function Home() {
         <nav className="flex w-full justify-between">
           <a href="#projects" className="hover:text-white transition-colors duration-300" onClick={() => showingProjects ? triggerShowHero() : triggerShowProjects()}>{showingProjects ? 'Home' : 'Projects'}</a>
           <a href="mailto:sistev.contacto@gmail.com" className="hover:text-white transition-colors duration-300">Contact Me</a>
-          <a href="#experiments" className="hover:text-white transition-colors duration-300">Experiments</a>
+          <a href="/experiments" className="hover:text-white transition-colors duration-300">Experiments</a>
         </nav>
       </header>
 
