@@ -1,12 +1,12 @@
 'use client';
 
 import InteractivePlanes from "@/app/components/interactive-planes/InteractivePlanes";
-import PlaneImage from "@/app/components/PlaneImage";
 import { Abril_Fatface, Montserrat } from 'next/font/google';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { gsap } from 'gsap'
+import * as THREE from 'three';
 
 const abrilFatface = Abril_Fatface({
   weight: '400',
@@ -100,11 +100,62 @@ const SKILLS = [
   "Google Analitycs", "Google Search Console", "Google Ads"
 ];
 
+const Preloader = ({ progress, complete }: { progress: number, complete: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (complete) {
+      const tl = gsap.timeline();
+      tl.to(textRef.current, {
+        y: -100,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power4.in"
+      })
+        .to(containerRef.current, {
+          y: "-100%",
+          duration: 1,
+          ease: "power4.inOut"
+        }, "-=0.4");
+    }
+  }, [complete]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center pointer-events-auto"
+    >
+      <div className="overflow-hidden mb-4">
+        <h2
+          ref={textRef}
+          className={`${abrilFatface.className} text-4xl lg:text-7xl text-white tracking-widest uppercase`}
+        >
+          Angel's Portfolio
+        </h2>
+      </div>
+
+      <div className="w-64 h-[1px] bg-white/10 relative overflow-hidden">
+        <div
+          className="absolute top-0 left-0 h-full bg-white transition-all duration-300 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="mt-4 text-[10px] uppercase tracking-[0.4em] text-white/40">
+        {progress}% Loading Experience
+      </div>
+    </div>
+  );
+};
+
 export default function Home() {
-  //const skils_random = SKILLS.sort(() => Math.random() - 0.5);
   const skils_random = SKILLS;
   const [showingProjects, setShowingProjects] = useState(false);
   const [currentPlane, setCurrentPlane] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [loadComplete, setLoadComplete] = useState(false);
   const triggerShowHero = () => {
     setShowingProjects(false);
     gsap.to('#hero-section', {
@@ -126,6 +177,32 @@ export default function Home() {
       ease: 'power3.out',
     })
   }
+  useEffect(() => {
+    // Configurar el manager de carga de Three.js
+    THREE.DefaultLoadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+      const p = Math.round((itemsLoaded / itemsTotal) * 100);
+      setProgress(p);
+    };
+
+    THREE.DefaultLoadingManager.onLoad = () => {
+      setTimeout(() => {
+        setLoadComplete(true);
+        setTimeout(() => setLoading(false), 1500); // Dar tiempo a la animación de salida
+      }, 1000);
+    };
+
+    // Caso de seguridad: si no hay assets 3D o tardan demasiado
+    const timer = setTimeout(() => {
+      if (progress < 100) {
+        setProgress(100);
+        setLoadComplete(true);
+        setTimeout(() => setLoading(false), 1500);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
 
     const handleWheel = (e: WheelEvent) => {
@@ -161,6 +238,8 @@ export default function Home() {
   }, [showingProjects]);
   return (
     <main className={`relative min-h-screen bg-black text-[#BBBBBB] ${montserrat.className} selection:bg-[#DDDDDD] selection:text-black`}>
+      {loading && <Preloader progress={progress} complete={loadComplete} />}
+
       {/* Background Interactive Elements */}
       <div className="absolute inset-0 z-0">
         <InteractivePlanes begin={showingProjects} projects={PROJECTS} onChangeIndex={(index) => setCurrentPlane(index)} />
