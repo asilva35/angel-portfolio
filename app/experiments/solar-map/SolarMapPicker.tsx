@@ -12,12 +12,13 @@ interface AddressData {
 
 const containerStyle = { width: '100%', height: '700px' };
 const defaultCenter = { lat: 52.3676, lng: 4.9041 };
+const MAP_LIBRARIES: ("drawing" | "geometry" | "places")[] = ['drawing', 'geometry', 'places'];
 
 const SolarMapPicker = () => {
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries: ['drawing', 'geometry', 'places']
+        libraries: MAP_LIBRARIES
     });
 
     const [map, setMap] = useState<google.maps.Map | null>(null);

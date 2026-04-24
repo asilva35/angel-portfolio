@@ -18,7 +18,7 @@ const BIKES: BikeModel[] = [
   { id: 'l', name: 'Cargo L', seats: 3, baseRange: 160, battery: '1000Wh', desc: 'Heavy Duty Carrier' },
 ];
 
-const libraries: ("places")[] = ["places"];
+const libraries: ("drawing" | "geometry" | "places")[] = ["drawing", "geometry", "places"];
 const defaultCenter = { lat: 43.0896, lng: -79.0849 };
 
 // Sleek dark map styles for the planner
