@@ -3,7 +3,7 @@
 import InteractivePlanes from "@/app/components/interactive-planes/InteractivePlanes";
 import PlaneImage from "@/app/components/PlaneImage";
 import { Abril_Fatface, Montserrat } from 'next/font/google';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { gsap } from 'gsap'
@@ -240,8 +240,11 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col items-center gap-2 text-[11px] uppercase tracking-widest text-[#AAAAAA] pointer-events-auto">
-          <ArrowDown className="w-4 h-4 animate-bounce text-[#AAAAAA]" />
-          <span>Scroll down</span>
+          <div className="flex gap-1">
+            {(currentPlane === 0 || currentPlane < PROJECTS.length - 1) && <ArrowDown className="w-4 h-4 animate-bounce text-[#AAAAAA]" />}
+            {(currentPlane === PROJECTS.length - 1 || currentPlane > 0) && <ArrowUp className="w-4 h-4 animate-bounce text-[#AAAAAA]" />}
+          </div>
+          <span>Scroll {currentPlane === 0 ? 'down' : currentPlane === PROJECTS.length - 1 ? 'up' : 'up / down'}</span>
         </div>
       </footer>
     </main>

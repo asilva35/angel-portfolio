@@ -247,9 +247,9 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
 
     useEffect(() => { onChangeIndex(indexRef.current) }, [indexRef.current])
 
-    const handleNextManual = () => {
-        if (indexRef.current < totalPlanes - 1) {
-            indexRef.current++;
+    const doAnimation = (bounce: boolean = false, bounceDirection: number = 1) => {
+        console.log("DO animation");
+        if (!bounce) {
             gsap.to(groupRef.current!.position, {
                 z: -2,
                 duration: 1.2,
@@ -275,6 +275,7 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                 }
             });
 
+            // Loading bar animation
             gsap.to(loadingBar.current, {
                 width: `100%`,
                 display: 'block',
@@ -291,9 +292,9 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
             });
 
         } else {
-            // Bounce Effect (Al final de la lista)
+            // Bounce Effect
             gsap.to(groupRef.current!.position, {
-                y: indexRef.current * 5 + 0.8,
+                y: indexRef.current * 5 + bounceDirection * 0.8,
                 duration: 0.25,
                 ease: 'power2.out',
                 onComplete: () => {
@@ -311,67 +312,21 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
         }
     }
 
+    const handleNextManual = () => {
+        if (indexRef.current < totalPlanes - 1) {
+            indexRef.current++;
+            doAnimation(false, 1);
+        } else {
+            doAnimation(true, 1);
+        }
+    }
+
     const handlePrevManual = () => {
         if (indexRef.current > 0) {
             indexRef.current--;
-            gsap.to(groupRef.current!.position, {
-                z: -2,
-                duration: 1.2,
-                ease: 'power3.inOut',
-                onComplete: () => {
-                    gsap.to(groupRef.current!.position, {
-                        y: indexRef.current * 5,
-                        duration: 1.2,
-                        ease: 'power3.inOut',
-                        onComplete: () => {
-                            gsap.to(groupRef.current!.position, {
-                                z: 0,
-                                duration: 1.2,
-                                ease: 'power3.inOut',
-                                onComplete: () => {
-                                    isMovingRef.current = false;
-                                    setIsTransitioning(false);
-                                }
-                            });
-                        }
-                    });
-
-                }
-            });
-
-            gsap.to(loadingBar.current, {
-                width: `100%`,
-                display: 'block',
-                duration: 3.6,
-                ease: 'power3.inOut',
-                onComplete: () => {
-                    gsap.to(loadingBar.current, {
-                        display: 'none',
-                        width: `0%`,
-                        duration: 0.2,
-                        ease: 'power3.inOut',
-                    });
-                }
-            });
-
+            doAnimation(false, -1);
         } else {
-            // Bounce Effect (Al inicio de la lista)
-            gsap.to(groupRef.current!.position, {
-                y: indexRef.current * 5 - 0.8,
-                duration: 0.25,
-                ease: 'power2.out',
-                onComplete: () => {
-                    gsap.to(groupRef.current!.position, {
-                        y: indexRef.current * 5,
-                        duration: 0.6,
-                        ease: 'elastic.out(1, 0.5)',
-                        onComplete: () => {
-                            isMovingRef.current = false;
-                            setIsTransitioning(false)
-                        }
-                    });
-                }
-            });
+            doAnimation(true, -1);
         }
     }
 
