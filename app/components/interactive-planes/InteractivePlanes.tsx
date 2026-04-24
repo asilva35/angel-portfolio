@@ -218,7 +218,7 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
     const isMovingRef = useRef(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const groupRef = useRef<THREE.Group>(null);
-    const indexRef = useRef(0);
+    const indexRef = useRef(-1);
     const totalPlanes = projects.length;
     const [postProcessing, setPostProcessing] = useState(false);
     const [listenToScroll, setListenToScroll] = useState(false);
@@ -230,6 +230,10 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
     useEffect(() => {
         if (!groupRef.current) return;
         if (begin) {
+            if (indexRef.current === -1) {
+                indexRef.current = 0;
+                setActiveIndex(0);
+            }
             gsap.to(groupRef.current.position, {
                 x: 0,
                 duration: 1.2,
@@ -245,7 +249,6 @@ export default function App({ begin, projects, onChangeIndex }: { begin: boolean
                     setShowInfo(true);
                 }
             });
-
         }
         else {
             gsap.to(groupRef.current!.position, {
